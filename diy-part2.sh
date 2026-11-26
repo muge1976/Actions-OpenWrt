@@ -16,12 +16,16 @@ sed -i 's/OpenWrt/winx86/g' package/base-files/files/bin/config_generate
 sudo apt-get update -qq >/dev/null 2>&1 || true
 sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1 || true
 mkdir -p "$PWD/staging_dir/host/bin"
-if [ -x /usr/bin/upx ]; then
-  cp -f /usr/bin/upx "$PWD/staging_dir/host/bin/upx"
+UPXSRC=""
+for c in /usr/bin/upx /usr/bin/upx-ucl /usr/local/bin/upx; do
+  [ -x "$c" ] && UPXSRC="$c" && break
+done
+if [ -n "$UPXSRC" ]; then
+  cp -f "$UPXSRC" "$PWD/staging_dir/host/bin/upx"
   chmod +x "$PWD/staging_dir/host/bin/upx"
-  echo "upx installed: $(ls -l $PWD/staging_dir/host/bin/upx)"
-fi
-if [ ! -x "$PWD/staging_dir/host/bin/upx" ]; then
+  echo "upx ready: $("$PWD/staging_dir/host/bin/upx" --version 2>&1 | head -1)"
+else
+  echo "upx not installed, patching Makefile"
   for mf in feeds/*/mihomo/Makefile; do
     [ -f "$mf" ] && sed -i 's|$(STAGING_DIR_HOST)/bin/upx|true|g' "$mf" && echo "patched $mf"
   done
