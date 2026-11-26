@@ -64,6 +64,7 @@ jobs:
           openwrt/dl
           openwrt/tmp/go-build
           ~/.ccache
+          openwrt/.ccache
         key: owrt-cache-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
         restore-keys: |
           owrt-cache-
@@ -88,6 +89,15 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: Scan node dependents
+      run: |
+        cd openwrt
+        echo "=== selected packages whose DEPENDS mention node ==="
+        grep -rn "DEPENDS.*+node" feeds/*/*/Makefile package/*/*/Makefile 2>/dev/null | head -40 || true
+        grep -rn "DEPENDS.*+node" feeds/*/*/Makefile feeds/*/*/*/Makefile 2>/dev/null | head -40 || true
+        echo "=== node in .config ==="
+        grep -n "node" .config | head -20 || true
 
     - name: Download package
       id: package
