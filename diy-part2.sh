@@ -30,3 +30,15 @@ else
     [ -f "$mf" ] && sed -i 's|$(STAGING_DIR_HOST)/bin/upx|true|g' "$mf" && echo "patched $mf"
   done
 fi
+
+# 修复：luci-app-mosdns（来自 kenzok8/small）和官方 packages 源的 mosdns 都会装 /etc/init.d/mosdns，安装阶段文件冲突导致整轮编译失败
+# 做法：改用 small 源的 mosdns（只装二进制，不装 init.d），与 luci-app-mosdns 的 init.d、配置、界面配套
+if [ -e package/feeds/packages/mosdns ]; then
+  rm -rf package/feeds/packages/mosdns
+  echo "mosdns: removed packages feed link"
+fi
+if [ ! -e package/feeds/small/mosdns ]; then
+  ln -s ../../../feeds/small/mosdns package/feeds/small/mosdns
+  echo "mosdns: linked small feed version"
+fi
+ls -l package/feeds/packages/mosdns package/feeds/small/mosdns 2>/dev/null || true
