@@ -65,11 +65,20 @@ jobs:
           openwrt/tmp/go-build
           ~/.ccache
           openwrt/.ccache
-          openwrt/build_dir
-          openwrt/staging_dir
         key: owrt-cache-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
         restore-keys: |
           owrt-cache-
+
+    - name: Restore build dir cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          openwrt/build_dir
+          openwrt/staging_dir
+          openwrt/bin
+        key: owrt-builddir-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
+        restore-keys: |
+          owrt-builddir-
 
     - name: Load custom feeds
       run: |
