@@ -65,6 +65,8 @@ jobs:
           openwrt/tmp/go-build
           ~/.ccache
           openwrt/.ccache
+          openwrt/build_dir
+          openwrt/staging_dir
         key: owrt-cache-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
         restore-keys: |
           owrt-cache-
@@ -113,7 +115,13 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j$(nproc)
+        set -o pipefail
+        if ! make -j$(nproc) 2>&1 | tee /tmp/build.log; then
+          echo "=== build failed, re-run package/install with V=s for details ==="
+          make -j1 package/install V=s 2>&1 | tail -200 || true
+          echo "=== end of install detail ==="
+          exit 1
+        fi
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
