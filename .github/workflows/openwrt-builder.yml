@@ -126,9 +126,11 @@ jobs:
         echo -e "$(nproc) thread compile"
         set -o pipefail
         if ! make -j$(nproc) 2>&1 | tee /tmp/build.log; then
-          echo "=== build failed, re-run package/install with V=s for details ==="
-          make -j1 package/install V=s 2>&1 | tail -200 || true
-          echo "=== end of install detail ==="
+          echo "=== build failed, re-run target/linux/install with V=s for details ==="
+          make -j1 target/linux/install V=s 2>&1 | tail -400 || true
+          echo "=== end of target install detail ==="
+          echo "=== last 60 lines of build.log ==="
+          tail -60 /tmp/build.log || true
           exit 1
         fi
         echo "status=success" >> $GITHUB_OUTPUT
