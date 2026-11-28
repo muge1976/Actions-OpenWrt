@@ -31,6 +31,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout
@@ -65,9 +67,10 @@ jobs:
           openwrt/tmp/go-build
           ~/.ccache
           openwrt/.ccache
-        key: owrt-cache-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
+        key: owrt-cache-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}
         restore-keys: |
           owrt-cache-
+      continue-on-error: true
 
     - name: Restore build dir cache
       uses: actions/cache@v4
@@ -76,9 +79,10 @@ jobs:
           openwrt/build_dir
           openwrt/staging_dir
           openwrt/bin
-        key: owrt-builddir-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}-${{ github.run_id }}
+        key: owrt-builddir-${{ hashFiles('.config', 'diy-part1.sh', 'diy-part2.sh') }}
         restore-keys: |
           owrt-builddir-
+      continue-on-error: true
 
     - name: Load custom feeds
       run: |
@@ -141,6 +145,16 @@ jobs:
     - name: Check space usage
       if: (!cancelled())
       run: df -hT
+
+    - name: Save compiled packages
+      uses: actions/upload-artifact@main
+      if: always()
+      with:
+        name: OpenWrt_packages${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: |
+          openwrt/bin/packages
+          openwrt/bin/targets/*/*/packages
+        retention-days: 90
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
